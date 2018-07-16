@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+
+  # Data API and authentication/authorization
+  node-test:
+    image: node-test
+    build:
+      context: ./
+      args:
+        NODE_ENV: test
+    hostname: localhost
+    depends_on:
+      - db
+    environment:
+      - CORS_ORIGIN=*
+      - DATABASE_URL=postgres://postgres@db:5432/dev
+      - DATABASE_DEBUG=false
+    ports:
+      - "8080:8080" # 
+      - "9229:9229" # Debug
+      - "127.0.0.1:9230:9230" # V8 inspector for src/server.js
+    volumes:
+      - ./locales:/usr/src/app/locales
+      - ./migrations:/usr/src/app/migrations
+      - ./seeds:/usr/src/app/seeds
+      - ./public:/usr/src/app/public
+      - ./images:/usr/src/app/images
+      - ./src:/usr/src/app/src
+      - ./.babelrc:/usr/src/app/.babelrc
+      - ./.eslintrc.js:/usr/src/app/.eslintrc.js
+      - ./.gitignore:/usr/src/app/.gitignore
+      - ./.prettierrc:/usr/src/app/.prettierrc
+      - ./package.json:/usr/src/app/package.json
+    command: npm run debug #node tools/run.js # or, `node --inspect=0.0.0.0:9229 tools/run.js`
+
+  # SQL and document data store
+  db:
+    image: postgres:9.6.6-alpine
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./postgres-initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+    ports:
+      - "127.0.0.1:5432:5432" # you can override it via docker-compose.override.yml
+
+volumes:
+  db:
+  yarn:
